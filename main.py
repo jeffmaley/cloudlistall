@@ -1,11 +1,10 @@
-"""This program will list the EC2 instances in an Organization or OU
-"""
-
 import sys
 import traceback
 import json
 import logging
 import boto3
+import argparse
+import aws
 
 
 logger = logging.getLogger()
@@ -26,47 +25,22 @@ def logger_(exception_type, exception_value, exception_traceback, excp): #pylint
     })
     logger.error(err_msg)
 
-
-def get_regions(session):
-    """Get current list of active regions"""
-    ec2 = session.client('ec2')
-    response = ''
-    try:
-        response = ec2.describe_regions()
-    except Exception as excp: # pylint: disable=broad-except
-        exception_type, exception_value, exception_traceback = sys.exc_info()
-        logger_(exception_type, exception_value, exception_traceback, excp)
-    return response['Regions']
-
-def get_ec2_instances(session, regions):
-    """Get EC2 instance information across regions"""
-    instance_data = ''
-    return instance_data
-
-
-def get_aws_session(access_key_id='', secret_access_key='', session_token='', profile_name=''):
-    """Get AWS session with provided creds"""
-    try:
-        session = boto3.session.Session(
-                    aws_access_key_id=access_key_id,
-                    aws_secret_access_key=secret_access_key,
-                    aws_session_token=session_token,
-                    profile_name=profile_name)
-    except Exception as excp: # pylint: disable=broad-except
-        exception_type, exception_value, exception_traceback = sys.exc_info()
-        logger_(exception_type, exception_value, exception_traceback, excp)
-    return session
-
 def main():
     """Main entry point"""
-    regions = get_regions(session)
+    parser = argparse.ArgumentParser(description='List cloud resources')
+    parser.add_argument('--aws-profile', type=str, dest='aws_profile', help='Name of an AWS profile to use')
+    args = parser.parse_args()
+    session = aws.get_aws_session(profile_name=args.aws_profile)
+    regions = aws.get_regions(session)
+    instances = aws.get_ec2_instances(session)
     try:
         print('Program starting')
+        print(regions)
+        print(instances)
     except Exception as excp: # pylint: disable=broad-except
         exception_type, exception_value, exception_traceback = sys.exc_info()
         logger_(exception_type, exception_value, exception_traceback, excp)
-
-
+    return
 
 if __name__ == "__main__":
     main()
